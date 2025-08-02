@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Processing API - Web Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .status.healthy {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.unhealthy {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .input-toggle {
+            display: flex;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .toggle-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .input-section {
+            display: none;
+        }
+        .input-section.active {
+            display: block;
+        }
+        .url-example {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .model-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .model-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .model-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .model-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,123,255,0.2);
+            transform: translateY(-2px);
+        }
+        .model-card.selected {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+            box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+        }
+        .model-card h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+            font-size: 16px;
+        }
+        .model-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .model-details strong {
+            color: #333;
+        }
+        .context-window {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .model-size {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .quantization {
+            background: #fff3e0;
+            color: #e65100;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .capabilities {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .provider-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .provider-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: #666;
+        }
+        .provider-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        .provider-content {
+            display: none;
+        }
+        .provider-content.active {
+            display: block;
+        }
+        .selected-model-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .streaming-response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .streaming-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #007bff;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .streaming-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #1976d2;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Processing API</h1>
+        
+        <form id="apiForm">
+            <div class="form-group">
+                <label for="modelProvider">AI Provider:</label>
+                <select id="modelProvider" name="modelProvider">
+                    <option value="ollama">Ollama (Local)</option>
+                    <option value="openai">OpenAI</option>
+                </select>
+            </div>
+
+            <div class="controls">
+                <button onclick="checkHealth()">Check Health</button>
+                <button id="loadModelsBtn" onclick="loadModels()">Load Models</button>
+                <button onclick="clearCacheAndReload()" style="background-color: #6c757d;">Clear Cache</button>
+            </div>
+
+            <div id="status" class="status">Checking API status...</div>
+
+            <div id="modelInfo" class="model-info" style="display: none;">
+                <h3>📋 Available Models</h3>
+                <div class="provider-tabs">
+                    <button class="provider-tab active" onclick="switchProviderTab('ollama')">Ollama</button>
+                    <button class="provider-tab" onclick="switchProviderTab('openai')">OpenAI</button>
+                </div>
+                <div id="ollamaContent" class="provider-content active">
+                    <div class="model-grid" id="ollamaModels"></div>
+                </div>
+                <div id="openaiContent" class="provider-content">
+                    <div class="model-grid" id="openaiModels"></div>
+                </div>
+            </div>
+
+            <div id="selectedModelInfo" class="selected-model-info" style="display: none;">
+                <span id="selectedModelText"></span>
+            </div>
+
+            <div class="input-toggle">
+                <button type="button" class="toggle-btn active" onclick="switchInput('text')">📝 Text Input</button>
+                <button type="button" class="toggle-btn" onclick="switchInput('url')">🌐 URL Input</button>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="streamMode" checked> Enable Streaming (see AI thinking in real-time)
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="systemPrompt">System Instructions (Optional):</label>
+                <textarea id="systemPrompt" name="systemPrompt" placeholder="Enter custom instructions for the AI model. Leave empty to use default instructions." rows="4"></textarea>
+                <div class="help-text">Customize how the AI should process your input. Examples: "You are a helpful assistant that summarizes text", "Extract key information and format as JSON", etc.</div>
+            </div>
+            
+            <div id="textSection" class="input-section active">
+                <div class="form-group">
+                    <label for="text">Text to Process:</label>
+                    <textarea id="text" name="text" placeholder="Enter the text you want to process with AI..." required></textarea>
+                </div>
+            </div>
+            
+            <div id="urlSection" class="input-section">
+                <div class="form-group">
+                    <label for="url">Website URL:</label>
+                    <input type="url" id="url" name="url" placeholder="https://example.com or example.com" />
+                    <div class="url-example">Examples: https://news.ycombinator.com, https://github.com, or just example.com</div>
+                </div>
+            </div>
+            
+            <button type="submit">Process with AI</button>
+        </form>
+        
+        <div id="response" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        let currentInputType = 'text';
+        let currentProvider = 'ollama';
+        let selectedModel = null;
+        let loadedModels = {};
+        
+        // Cache configuration
+        const CACHE_KEY = 'ai_models_cache';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        // Check health on page load
+        window.onload = function() {
+            checkHealth();
+            loadCachedModels();
+        };
+
+        function switchInput(type) {
+            currentInputType = type;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update input sections
+            document.querySelectorAll('.input-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(type + 'Section').classList.add('active');
+            
+            // Update form validation
+            updateFormValidation();
+        }
+
+        function updateFormValidation() {
+            const textInput = document.getElementById('text');
+            const urlInput = document.getElementById('url');
+            
+            if (currentInputType === 'text') {
+                textInput.required = true;
+                urlInput.required = false;
+                urlInput.value = '';
+            } else {
+                textInput.required = false;
+                urlInput.required = true;
+                textInput.value = '';
+            }
+        }
+
+        async function checkHealth() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Checking API status...';
+            statusDiv.className = 'status';
+            
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusDiv.textContent = '✅ API is healthy';
+                    statusDiv.className = 'status healthy';
+                } else {
+                    statusDiv.textContent = '❌ API is unhealthy';
+                    statusDiv.className = 'status unhealthy';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Cannot connect to API';
+                statusDiv.className = 'status unhealthy';
+            }
+        }
+
+        // Cache management functions
+        function saveToCache(data) {
+            try {
+                const cacheData = {
+                    models: data,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+                console.log('Models cached successfully');
+            } catch (error) {
+                console.error('Error saving to cache:', error);
+            }
+        }
+
+        function loadFromCache() {
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const cacheData = JSON.parse(cached);
+                    const now = Date.now();
+                    
+                    // Check if cache is still valid
+                    if (now - cacheData.timestamp < CACHE_DURATION) {
+                        console.log('Loading models from cache');
+                        return cacheData.models;
+                    } else {
+                        console.log('Cache expired, clearing...');
+                        localStorage.removeItem(CACHE_KEY);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading from cache:', error);
+                localStorage.removeItem(CACHE_KEY);
+            }
+            return null;
+        }
+
+        function loadCachedModels() {
+            const cachedModels = loadFromCache();
+            if (cachedModels) {
+                loadedModels = cachedModels;
+                displayModelInfo(cachedModels);
+                updateModelDisplay(currentProvider);
+            }
+        }
+
+        function clearCache() {
+            try {
+                localStorage.removeItem(CACHE_KEY);
+                console.log('Cache cleared');
+            } catch (error) {
+                console.error('Error clearing cache:', error);
+            }
+        }
+
+        function clearCacheAndReload() {
+            clearCache();
+            loadedModels = {};
+            
+            // Hide model info section
+            document.getElementById('modelInfo').style.display = 'none';
+            
+            // Clear selected model
+            selectedModel = null;
+            document.getElementById('selectedModelInfo').style.display = 'none';
+            
+            alert('Cache cleared! Click "Load Models" to refresh the model list.');
+        }
+
+        async function loadModels() {
+            const loadBtn = document.getElementById('loadModelsBtn');
+            const originalText = loadBtn.textContent;
+            
+            // Show loading state
+            loadBtn.disabled = true;
+            loadBtn.innerHTML = '<span class="loading-spinner"></span>Loading models...';
+            
+            try {
+                const response = await fetch('/models');
+                const data = await response.json();
+                
+                loadedModels = data;
+                
+                // Save to cache
+                saveToCache(data);
+                
+                displayModelInfo(data);
+                
+                // Load models for current provider
+                await loadModelsForProvider(currentProvider);
+                
+            } catch (error) {
+                console.error('Error loading models:', error);
+                alert('Error loading models. Please try again.');
+            } finally {
+                // Restore button state
+                loadBtn.disabled = false;
+                loadBtn.textContent = originalText;
+            }
+        }
+
+        async function loadModelsForProvider(provider) {
+            if (!loadedModels[provider] || loadedModels[provider].length === 0) {
+                // If no models loaded for this provider, try to get them
+                try {
+                    console.log(`Loading models for provider: ${provider}`);
+                    
+                    // First, get the list of models from the /models endpoint
+                    const modelsResponse = await fetch('/models');
+                    if (modelsResponse.ok) {
+                        const modelsData = await modelsResponse.json();
+                        console.log(`Models response for ${provider}:`, modelsData);
+                        
+                        if (modelsData[provider] && modelsData[provider].length > 0) {
+                            // Show loading message for detailed model info
+                            const modelsDiv = document.getElementById(provider + 'Models');
+                            modelsDiv.innerHTML = '<p><span class="loading-spinner"></span>Loading detailed model information...</p>';
+                            
+                            // For each model, get detailed information using the /show endpoint
+                            const detailedModels = await Promise.all(
+                                modelsData[provider].map(async (model) => {
+                                    try {
+                                        console.log(`Fetching details for model: ${model.name || model.id}`);
+                                        
+                                        // Get detailed model information
+                                        const detailResponse = await fetch('/show', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({ 
+                                                provider: provider,
+                                                model: model.name || model.id,
+                                                detailed: true
+                                            })
+                                        });
+                                        
+                                        if (detailResponse.ok) {
+                                            const detailData = await detailResponse.json();
+                                            console.log(`Detail response for ${model.name}:`, detailData);
+                                            
+                                            // Merge the basic model info with detailed info
+                                            if (detailData.models && detailData.models.length > 0) {
+                                                const detailedModel = detailData.models[0];
+                                                return {
+                                                    ...model,
+                                                    ...detailedModel
+                                                };
+                                            }
+                                        } else {
+                                            console.log(`Detailed request failed for ${model.name}:`, detailResponse.status);
+                                        }
+                                        
+                                    } catch (error) {
+                                        console.error(`Error loading details for model ${model.name}:`, error);
+                                    }
+                                    return model;
+                                })
+                            );
+                            
+                            console.log(`Final detailed models for ${provider}:`, detailedModels);
+                            loadedModels[provider] = detailedModels;
+                            
+                            // Update cache with new provider data
+                            saveToCache(loadedModels);
+                            
+                            displayModelInfo(loadedModels);
+                        }
+                    } else {
+                        console.log(`Models request failed for ${provider}:`, modelsResponse.status);
+                    }
+                } catch (error) {
+                    console.error(`Error loading ${provider} models:`, error);
+                }
+            }
+            
+            // Update the display for the current provider
+            updateModelDisplay(provider);
+        }
+
+        function updateModelDisplay(provider) {
+            const modelsDiv = document.getElementById(provider + 'Models');
+            modelsDiv.innerHTML = '';
+            
+            if (loadedModels[provider] && loadedModels[provider].length > 0) {
+                loadedModels[provider].forEach(model => {
+                    const card = createModelCard(model, provider);
+                    modelsDiv.appendChild(card);
+                });
+            } else {
+                modelsDiv.innerHTML = `<p>No ${provider} models available. Click "Load Models" to refresh.</p>`;
+            }
+        }
+
+        function displayModelInfo(models) {
+            const modelInfoDiv = document.getElementById('modelInfo');
+            
+            // Show the model info section
+            modelInfoDiv.style.display = 'block';
+            
+            // Update display for current provider
+            updateModelDisplay(currentProvider);
+        }
+
+        function createModelCard(model, provider) {
+            const card = document.createElement('div');
+            card.className = 'model-card';
+            card.onclick = () => selectModel(model, provider);
+            
+            const name = model.name || model.id || 'Unknown';
+            
+            // Debug: Log the model object to see its structure
+            console.log('Model data for', name, ':', model);
+            
+            // Extract detailed information from the API response structure
+            let contextWindow = 'Unknown';
+            let description = 'No description available';
+            let size = 'Unknown';
+            let parameters = 'Unknown';
+            let format = 'Unknown';
+            let quantization = 'Unknown';
+            let capabilities = [];
+            
+                         // Check if we have detailed model info from the API
+             if (model.details) {
+                 console.log('Found details:', model.details);
+                 format = model.details.format || 'Unknown';
+                 family = model.details.family || 'Unknown';
+                 parameters = model.details.parameter_size || 'Unknown';
+                 quantization = model.details.quantization_level || 'Unknown';
+             }
+             
+             if (model.model_info) {
+                 console.log('Found model_info:', model.model_info);
+                 
+                 // Extract context length from model_info - check multiple possible keys
+                 // Use the family from details if available, otherwise extract from model name
+                 let modelFamily = null;
+                 if (family && family !== 'Unknown') {
+                     modelFamily = family;
+                 } else if (name && name.includes(':')) {
+                     const parts = name.split(':');
+                     if (parts.length >= 2) {
+                         modelFamily = parts[0];
+                     }
+                 }
+                 
+                 // Try family-specific context length first, then fallback to general
+                 if (modelFamily && model.model_info[`${modelFamily}.context_length`]) {
+                     contextWindow = model.model_info[`${modelFamily}.context_length`];
+                 } else if (model.model_info['general.context_length']) {
+                     contextWindow = model.model_info['general.context_length'];
+                 } else if (model.model_info['context_length']) {
+                     contextWindow = model.model_info['context_length'];
+                 }
+                
+                // Extract parameter count - prefer parameter_size from details, fallback to parameter_count
+                if (!parameters || parameters === 'Unknown') {
+                    if (model.model_info['general.parameter_count']) {
+                        const paramCount = model.model_info['general.parameter_count'];
+                        if (typeof paramCount === 'number') {
+                            parameters = `${(paramCount / 1000000000).toFixed(1)}B`;
+                        }
+                    }
+                }
+                
+                // Extract size label
+                if (model.model_info['general.size_label']) {
+                    size = model.model_info['general.size_label'];
+                }
+                
+                // Extract architecture for description
+                if (model.model_info['general.architecture']) {
+                    description = `${model.model_info['general.architecture']} model`;
+                }
+                
+                // Extract license if available
+                if (model.model_info['general.license']) {
+                    description += ` (${model.model_info['general.license']})`;
+                }
+            }
+            
+            // Extract capabilities
+            if (model.capabilities && Array.isArray(model.capabilities)) {
+                capabilities = model.capabilities;
+            }
+            
+            // Also check for basic model properties that might be available
+            if (model.context_window) contextWindow = model.context_window;
+            if (model.context) contextWindow = model.context;
+            if (model.size) size = model.size;
+            if (model.parameters) parameters = model.parameters;
+            if (model.format) format = model.format;
+            if (model.description) description = model.description;
+            
+            // Try to extract information from the model name if we have basic info
+            if (name && name.includes(':')) {
+                const parts = name.split(':');
+                if (parts.length >= 2) {
+                    const modelFamily = parts[0];
+                    const modelSize = parts[1];
+                    
+                    if (!size || size === 'Unknown') {
+                        size = modelSize;
+                    }
+                    
+                    if (!description || description === 'No description available') {
+                        description = `${modelFamily} model`;
+                    }
+                }
+            }
+            
+            // Format size for better display
+            const formatSize = (size) => {
+                if (size === 'Unknown') return size;
+                if (typeof size === 'number') {
+                    const sizes = ['B', 'KB', 'MB', 'GB'];
+                    let order = 0;
+                    let sizeNum = size;
+                    while (sizeNum >= 1024 && order < sizes.length - 1) {
+                        order++;
+                        sizeNum = sizeNum / 1024;
+                    }
+                    return `${sizeNum.toFixed(1)} ${sizes[order]}`;
+                }
+                return size;
+            };
+            
+            card.innerHTML = `
+                <h4>${name}</h4>
+                <div class="model-details">
+                    <p><strong>Description:</strong> ${description}</p>
+                    <p><strong>Context Window:</strong> <span class="context-window">${contextWindow}</span></p>
+                    <p><strong>Size:</strong> <span class="model-size">${formatSize(size)}</span></p>
+                    ${parameters !== 'Unknown' ? `<p><strong>Parameters:</strong> ${parameters}</p>` : ''}
+                    ${format !== 'Unknown' ? `<p><strong>Format:</strong> ${format}</p>` : ''}
+                    ${quantization !== 'Unknown' ? `<p><strong>Quantization:</strong> <span class="quantization">${quantization}</span></p>` : ''}
+                    ${capabilities.length > 0 ? `<p><strong>Capabilities:</strong> <span class="capabilities">${capabilities.join(', ')}</span></p>` : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function selectModel(model, provider) {
+            // Remove previous selection
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            event.currentTarget.classList.add('selected');
+            
+            // Update selected model
+            selectedModel = {
+                name: model.name || model.id,
+                provider: provider,
+                ...model
+            };
+            
+            // Update selected model display
+            const selectedModelInfo = document.getElementById('selectedModelInfo');
+            const selectedModelText = document.getElementById('selectedModelText');
+            selectedModelText.textContent = `Selected: ${selectedModel.name} (${provider})`;
+            selectedModelInfo.style.display = 'block';
+        }
+
+        function switchProviderTab(provider) {
+            currentProvider = provider;
+            
+            // Update tab buttons
+            document.querySelectorAll('.provider-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content sections
+            document.querySelectorAll('.provider-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(provider + 'Content').classList.add('active');
+            
+            // Load models for the selected provider
+            loadModelsForProvider(provider);
+            
+            // Clear current model selection when switching providers
+            selectedModel = null;
+            document.getElementById('selectedModelInfo').style.display = 'none';
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+        }
+
+        // Update provider selection when dropdown changes
+        document.getElementById('modelProvider').addEventListener('change', function() {
+            const newProvider = this.value;
+            if (newProvider !== currentProvider) {
+                currentProvider = newProvider;
+                
+                // Switch to the corresponding tab
+                document.querySelectorAll('.provider-tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector(`[onclick="switchProviderTab('${newProvider}')"]`).classList.add('active');
+                
+                // Update content sections
+                document.querySelectorAll('.provider-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(newProvider + 'Content').classList.add('active');
+                
+                // Load models for the new provider
+                loadModelsForProvider(newProvider);
+                
+                // Clear current model selection
+                selectedModel = null;
+                document.getElementById('selectedModelInfo').style.display = 'none';
+                document.querySelectorAll('.model-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('apiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const responseDiv = document.getElementById('response');
+            const submitButton = document.querySelector('button[type="submit"]');
+            const streamMode = document.getElementById('streamMode').checked;
+            
+            // Show loading state
+            responseDiv.style.display = 'block';
+            submitButton.disabled = true;
+            
+            if (streamMode) {
+                // Streaming mode
+                responseDiv.className = 'streaming-response';
+                responseDiv.innerHTML = '<div class="streaming-info">🤖 AI is thinking...</div><div id="streaming-content"></div><span class="streaming-cursor"></span>';
+                
+                try {
+                    const formData = new FormData(e.target);
+                    const requestData = {
+                        model_provider: formData.get('modelProvider'),
+                        model_name: selectedModel ? selectedModel.name : null,
+                        system_prompt: formData.get('systemPrompt') || null
+                    };
+                    
+                    // Add the appropriate input based on current type
+                    if (currentInputType === 'text') {
+                        requestData.text = formData.get('text');
+                    } else {
+                        requestData.url = formData.get('url');
+                    }
+                    
+                    const response = await fetch('/process-stream', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        responseDiv.innerHTML = `<div class="streaming-info error">❌ Error: ${errorData.detail || 'Unknown error'}</div>`;
+                        return;
+                    }
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let streamingContent = '';
+                    let processingInfo = '';
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    
+                                    if (data.error) {
+                                        responseDiv.innerHTML = `<div class="streaming-info error">❌ Error: ${data.error}</div>`;
+                                        return;
+                                    }
+                                    
+                                    if (data.chunk) {
+                                        streamingContent += data.chunk;
+                                        document.getElementById('streaming-content').textContent = streamingContent;
+                                    }
+                                    
+                                    if (data.done) {
+                                        const cursor = document.querySelector('.streaming-cursor');
+                                        if (cursor) cursor.remove();
+                                        
+                                        processingInfo = `✅ Completed in ${data.processing_time.toFixed(2)}s using ${data.model_used}`;
+                                        document.querySelector('.streaming-info').innerHTML = processingInfo;
+                                    }
+                                } catch (e) {
+                                    // Ignore JSON parse errors for incomplete chunks
+                                }
+                            }
+                        }
+                    }
+                    
+                } catch (error) {
+                    responseDiv.innerHTML = `<div class="streaming-info error">❌ Network error: ${error.message}</div>`;
+                }
+            } else {
+                // Non-streaming mode
+                responseDiv.className = 'response loading';
+                responseDiv.textContent = 'Processing with AI...';
+                
+                try {
+                    const formData = new FormData(e.target);
+                    const requestData = {
+                        model_provider: formData.get('modelProvider'),
+                        model_name: selectedModel ? selectedModel.name : null,
+                        system_prompt: formData.get('systemPrompt') || null
+                    };
+                    
+                    // Add the appropriate input based on current type
+                    if (currentInputType === 'text') {
+                        requestData.text = formData.get('text');
+                    } else {
+                        requestData.url = formData.get('url');
+                    }
+                    
+                    const response = await fetch('/process', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        responseDiv.className = 'response success';
+                        responseDiv.textContent = JSON.stringify(data, null, 2);
+                    } else {
+                        responseDiv.className = 'response error';
+                        responseDiv.textContent = `Error: ${data.detail || 'Unknown error'}`;
+                    }
+                } catch (error) {
+                    responseDiv.className = 'response error';
+                    responseDiv.textContent = `Network error: ${error.message}`;
+                }
+            }
+            
+            submitButton.disabled = false;
+        });
+    </script>
+</body>
+</html> 
