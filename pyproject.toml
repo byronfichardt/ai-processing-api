@@ -48,10 +48,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/ai-processing-api"
-Repository = "https://github.com/yourusername/ai-processing-api"
-Documentation = "https://github.com/yourusername/ai-processing-api#readme"
-Issues = "https://github.com/yourusername/ai-processing-api/issues"
+Homepage = "https://github.com/byronfichardt/ai-processing-api"
+Repository = "https://github.com/byronfichardt/ai-processing-api"
+Documentation = "https://github.com/byronfichardt/ai-processing-api#readme"
+Issues = "https://github.com/byronfichardt/ai-processing-api/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

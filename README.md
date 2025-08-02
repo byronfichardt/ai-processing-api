@@ -1,11 +1,11 @@
 # AI Processing API
 
-[![CI](https://github.com/yourusername/ai-processing-api/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/ai-processing-api/actions/workflows/ci.yml)
+[![CI](https://github.com/byronfichardt/ai-processing-api/actions/workflows/ci.yml/badge.svg)](https://github.com/byronfichardt/ai-processing-api/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
 
-A simple FastAPI-based API that processes text requests with AI and returns formatted JSON responses. Supports both OpenAI and local Ollama models.
+A powerful FastAPI-based API that processes text and web content with AI and returns formatted JSON responses. Supports both OpenAI and local Ollama models with advanced features including streaming responses, URL processing, and a web interface.
 
 ## 🚀 Quick Start
 
@@ -13,7 +13,7 @@ A simple FastAPI-based API that processes text requests with AI and returns form
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ai-processing-api.git
+git clone https://github.com/byronfichardt/ai-processing-api.git
 cd ai-processing-api
 
 # Set your OpenAI API key
@@ -24,13 +24,16 @@ docker-compose up -d
 
 # Access the API
 curl http://localhost:8000/health
+
+# Access the web interface
+open http://localhost:8000/static/
 ```
 
 ### Manual Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ai-processing-api.git
+git clone https://github.com/byronfichardt/ai-processing-api.git
 cd ai-processing-api
 
 # Install dependencies
@@ -44,16 +47,19 @@ cp env_example.txt .env
 python start.py
 ```
 
-## Features
+## ✨ Features
 
-- **Text Processing**: Send text to be processed by AI
+- **Text & URL Processing**: Process both direct text input and web content from URLs
 - **Multiple AI Providers**: Support for OpenAI and local Ollama models
-- **Multiple Task Types**: Support for summarization, analysis, extraction, and translation
-- **JSON Formatting**: Returns structured JSON responses
+- **Streaming Responses**: Real-time streaming of AI responses for better UX
+- **Web Interface**: Built-in web UI for easy testing and interaction
+- **Advanced Task Types**: Support for summarization, analysis, extraction, translation, and custom tasks
+- **JSON Structuring**: Intelligent JSON formatting with custom system prompts
 - **Error Handling**: Comprehensive error handling and validation
-- **Health Checks**: Built-in health monitoring
+- **Health Checks**: Built-in health monitoring with AI provider status
 - **CORS Support**: Cross-origin request support
 - **API Documentation**: Automatic OpenAPI/Swagger documentation
+- **Logging**: Detailed logging of Ollama responses for debugging
 
 ## 📋 Setup
 
@@ -106,20 +112,38 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The API will be available at: `http://localhost:8000`
+The web interface will be available at: `http://localhost:8000/static/`
+
+## 🌐 Web Interface
+
+Access the built-in web interface at `http://localhost:8000/static/` for:
+
+- **Easy Testing**: No need for curl or Postman
+- **Real-time Streaming**: See AI responses as they're generated
+- **Model Selection**: Choose between OpenAI and Ollama models
+- **Task Configuration**: Configure different task types and formats
+- **URL Processing**: Test URL content extraction directly
+- **Response History**: View and copy previous responses
 
 ## API Endpoints
 
 ### Root Endpoint
 - **GET** `/` - API information and available endpoints
+- **GET** `/api` - Detailed API information
 
 ### Health Check
-- **GET** `/health` - Check API health and AI availability
+- **GET** `/health` - Check API health and AI provider availability
 
-### Process Text
-- **POST** `/process` - Process text with AI
+### Process Content
+- **POST** `/process` - Process text or URL content with AI
+- **POST** `/process-stream` - Stream AI responses in real-time
 
 ### Models
 - **GET** `/models` - List available models from all providers
+- **POST** `/show` - Get detailed information about specific models
+
+### Web Interface
+- **GET** `/static/` - Built-in web interface for testing
 
 ### API Documentation
 - **GET** `/docs` - Interactive API documentation (Swagger UI)
@@ -135,6 +159,30 @@ curl -X POST "http://localhost:8000/process" \
   -d '{
     "text": "The quick brown fox jumps over the lazy dog.",
     "task_type": "analyze",
+    "format_type": "json"
+  }'
+```
+
+### URL Content Processing
+
+```bash
+curl -X POST "http://localhost:8000/process" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com/article",
+    "task_type": "summarize",
+    "format_type": "json"
+  }'
+```
+
+### Streaming Response
+
+```bash
+curl -X POST "http://localhost:8000/process-stream" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Write a short story about a robot learning to paint.",
+    "task_type": "general",
     "format_type": "json"
   }'
 ```
@@ -178,30 +226,50 @@ curl -X POST "http://localhost:8000/process" \
   }'
 ```
 
+### Custom System Prompts
+
+```bash
+curl -X POST "http://localhost:8000/process" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Analyze this technical document",
+    "task_type": "analyze",
+    "format_type": "json",
+    "system_prompt": "You are a technical expert. Focus on identifying key technical concepts and their relationships."
+  }'
+```
+
 ## Request Parameters
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `text` | string | Yes | - | The text to be processed |
+| `text` | string | No* | null | The text to be processed |
+| `url` | string | No* | null | URL to fetch and process content from |
 | `task_type` | string | No | "general" | Type of processing: "general", "summarize", "analyze", "extract", "translate" |
 | `format_type` | string | No | "json" | Response format: "json" or "text" |
 | `additional_context` | string | No | null | Additional context or instructions |
 | `model_provider` | string | No | "openai" | AI provider: "openai" or "ollama" |
 | `model_name` | string | No | null | Specific model name for the provider |
+| `system_prompt` | string | No | null | Custom system instructions for the AI model |
+
+*Either `text` or `url` must be provided
 
 ## Response Format
 
+### Standard Response
 ```json
 {
   "success": true,
-  "data": {
-    // AI processed data in JSON format
-  },
-  "timestamp": "2024-01-01T12:00:00.000000",
+  "result": "AI processed result",
+  "model_used": "gpt-3.5-turbo",
   "processing_time": 1.234,
-  "error": null
+  "source_type": "text",
+  "source": "original text or URL"
 }
 ```
+
+### Streaming Response
+The `/process-stream` endpoint returns a Server-Sent Events (SSE) stream with real-time updates.
 
 ## Error Handling
 
@@ -210,9 +278,11 @@ The API returns structured error responses:
 ```json
 {
   "success": false,
-  "data": {},
-  "timestamp": "2024-01-01T12:00:00.000000",
+  "result": "",
+  "model_used": "",
   "processing_time": 0.123,
+  "source_type": "text",
+  "source": "original input",
   "error": "Error description"
 }
 ```
@@ -255,7 +325,8 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 1. Start the server
 2. Visit `http://localhost:8000/docs` for interactive testing
 3. Use the Swagger UI to test endpoints
-4. Run automated tests: `python test_api.py`
+4. Visit `http://localhost:8000/static/` for the web interface
+5. Run automated tests: `python test_api.py`
 
 ### Code Quality
 
@@ -294,7 +365,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - **OpenAI**: Python client for OpenAI API
 - **python-dotenv**: Environment variable management
 - **python-multipart**: Form data parsing
-- **requests**: HTTP library for Ollama integration
+- **requests**: HTTP library for Ollama integration and URL fetching
 
 ## 📄 License
 
